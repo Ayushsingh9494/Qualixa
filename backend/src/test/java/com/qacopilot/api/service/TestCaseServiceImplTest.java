@@ -3,6 +3,7 @@ package com.qacopilot.api.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qacopilot.api.dto.TestCaseDTO;
 import com.qacopilot.api.entity.Requirement;
+import com.qacopilot.api.entity.User;
 import com.qacopilot.api.repository.RequirementRepository;
 import com.qacopilot.api.repository.TestCaseRepository;
 import org.junit.jupiter.api.Assertions;
@@ -12,6 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,6 +49,13 @@ public class TestCaseServiceImplTest {
 
     @Test
     public void testGenerateTestCases() {
+        User mockUser = User.builder().id(1L).username("testuser").email("test@example.com").build();
+        Authentication authentication = Mockito.mock(Authentication.class);
+        Mockito.when(authentication.getPrincipal()).thenReturn(mockUser);
+        SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
         Long requirementId = 1L;
         Requirement requirement = Requirement.builder()
                 .id(requirementId)
@@ -52,7 +63,7 @@ public class TestCaseServiceImplTest {
                 .description("Login system")
                 .build();
 
-        Mockito.when(requirementRepository.findById(requirementId)).thenReturn(Optional.of(requirement));
+        Mockito.when(requirementRepository.findByIdAndUserId(requirementId, 1L)).thenReturn(Optional.of(requirement));
 
         String mockGeminiResponse = """
                 {

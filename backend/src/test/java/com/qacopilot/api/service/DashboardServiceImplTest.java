@@ -3,6 +3,7 @@ package com.qacopilot.api.service;
 import com.qacopilot.api.dto.DashboardDTO;
 import com.qacopilot.api.entity.TestCase;
 import com.qacopilot.api.entity.TestExecution;
+import com.qacopilot.api.entity.User;
 import com.qacopilot.api.repository.TestCaseRepository;
 import com.qacopilot.api.repository.TestExecutionRepository;
 import org.junit.jupiter.api.Assertions;
@@ -12,9 +13,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -38,12 +40,19 @@ public class DashboardServiceImplTest {
 
     @Test
     public void testGetDashboardStatistics() {
+        User mockUser = User.builder().id(1L).username("testuser").email("test@example.com").build();
+        Authentication authentication = Mockito.mock(Authentication.class);
+        Mockito.when(authentication.getPrincipal()).thenReturn(mockUser);
+        SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
         TestCase tc1 = TestCase.builder().id(1L).testCaseId("TC-001").title("Login").build();
         TestCase tc2 = TestCase.builder().id(2L).testCaseId("TC-002").title("Logout").build();
         TestCase tc3 = TestCase.builder().id(3L).testCaseId("TC-003").title("Search").build();
 
-        Mockito.when(testCaseRepository.count()).thenReturn(3L);
-        Mockito.when(testCaseRepository.findAll()).thenReturn(List.of(tc1, tc2, tc3));
+        Mockito.when(testCaseRepository.countByRequirementUserId(1L)).thenReturn(3L);
+        Mockito.when(testCaseRepository.findByRequirementUserId(1L)).thenReturn(List.of(tc1, tc2, tc3));
 
         TestExecution run1 = TestExecution.builder().id(10L).testCase(tc1).status("PASSED").executedAt(LocalDateTime.now()).build();
         TestExecution run2 = TestExecution.builder().id(11L).testCase(tc2).status("FAILED").executedAt(LocalDateTime.now()).build();
@@ -52,8 +61,8 @@ public class DashboardServiceImplTest {
         Mockito.when(testExecutionRepository.findByTestCaseIdOrderByExecutedAtDesc(2L)).thenReturn(List.of(run2));
         Mockito.when(testExecutionRepository.findByTestCaseIdOrderByExecutedAtDesc(3L)).thenReturn(Collections.emptyList());
 
-        Page<TestExecution> mockPage = new PageImpl<>(List.of(run1, run2));
-        Mockito.when(testExecutionRepository.findAll(Mockito.any(Pageable.class))).thenReturn(mockPage);
+        Mockito.when(testExecutionRepository.findByTestCaseRequirementUserId(Mockito.eq(1L), Mockito.any(Pageable.class)))
+                .thenReturn(List.of(run1, run2));
 
         DashboardDTO result = dashboardService.getDashboardStatistics();
 

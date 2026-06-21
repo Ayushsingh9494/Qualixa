@@ -4,6 +4,7 @@ import com.qacopilot.api.dto.TestExecutionDTO;
 import com.qacopilot.api.entity.SeleniumScript;
 import com.qacopilot.api.entity.TestCase;
 import com.qacopilot.api.entity.TestExecution;
+import com.qacopilot.api.entity.User;
 import com.qacopilot.api.repository.SeleniumScriptRepository;
 import com.qacopilot.api.repository.TestCaseRepository;
 import com.qacopilot.api.repository.TestExecutionRepository;
@@ -14,6 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
@@ -42,6 +46,13 @@ public class TestExecutionServiceImplTest {
 
     @Test
     public void testExecuteTest() {
+        User mockUser = User.builder().id(1L).username("testuser").email("test@example.com").build();
+        Authentication authentication = Mockito.mock(Authentication.class);
+        Mockito.when(authentication.getPrincipal()).thenReturn(mockUser);
+        SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        Mockito.when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
         Long testCaseId = 1L;
         TestCase testCase = TestCase.builder()
                 .id(testCaseId)
@@ -56,7 +67,7 @@ public class TestExecutionServiceImplTest {
                 .scriptCode("public class GeneratedTest {}")
                 .build();
 
-        Mockito.when(testCaseRepository.findById(testCaseId)).thenReturn(Optional.of(testCase));
+        Mockito.when(testCaseRepository.findByIdAndRequirementUserId(testCaseId, 1L)).thenReturn(Optional.of(testCase));
         Mockito.when(seleniumScriptRepository.findByTestCaseId(testCaseId)).thenReturn(Optional.of(script));
 
         Mockito.when(testExecutionRepository.save(Mockito.any())).thenAnswer(invocation -> {

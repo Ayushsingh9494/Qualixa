@@ -3,6 +3,7 @@ package com.qacopilot.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qacopilot.api.dto.RequirementDTO;
 import com.qacopilot.api.service.RequirementService;
+import com.qacopilot.api.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ public class RequirementControllerTest {
 
     @MockBean
     private RequirementService requirementService;
+
+    @MockBean
+    private UserRepository userRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
