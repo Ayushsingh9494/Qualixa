@@ -96,7 +96,4 @@ The application will launch on **http://localhost:5173**.
 
 ---
 
-## 🛡️ License
-Distributed under the MIT License. See `LICENSE` for more information.
-
 Enjoy automation with **Qualixa**! 🚀✨
